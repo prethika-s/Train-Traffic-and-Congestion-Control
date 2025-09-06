@@ -1,19 +1,40 @@
-import api from './_axios.js'
-
-
-const USE_MOCK = !import.meta.env.VITE_API_BASE_URL
-
+import { loadDataset } from './dataset.js'
 
 export async function getTimetable({ trainNo }) {
-if (USE_MOCK) {
-await new Promise(r => setTimeout(r, 500))
-return [
-{ code: 'SBC', name: 'KSR Bengaluru', arrival: '-', departure: '07:00', day: 1 },
-{ code: 'BWT', name: 'Bangarapet', arrival: '07:58', departure: '08:00', day: 1 },
-{ code: 'KPD', name: 'Katpadi Jn', arrival: '10:15', departure: '10:20', day: 1 },
-{ code: 'MAS', name: 'MGR Chennai Central', arrival: '13:30', departure: '-', day: 1 }
-]
-}
-const { data } = await api.get(`/trains/${trainNo}/timetable`)
-return data
+  const rows = await loadDataset()
+  const r = rows.find(x => String(x.Train_ID) === String(trainNo))
+  if (!r) throw new Error(`Train ${trainNo} not found in dataset`)
+
+  const stops = []
+
+  // Origin
+  stops.push({
+    code: r.Source,
+    name: r.Source,
+    arrival: '—',
+    departure: r.Scheduled_Departure || '—',
+    day: 1,
+  })
+
+  // Current (if present)
+  if (r.Current_Station && r.Current_Station !== r.Source && r.Current_Station !== r.Destination) {
+    stops.push({
+      code: r.Current_Station,
+      name: r.Current_Station,
+      arrival: r.Actual_Arrival || r.Scheduled_Arrival || '—',
+      departure: '—',
+      day: 1,
+    })
+  }
+
+  // Destination
+  stops.push({
+    code: r.Destination,
+    name: r.Destination,
+    arrival: r.Scheduled_Arrival || '—',
+    departure: '—',
+    day: 1,
+  })
+
+  return stops
 }
