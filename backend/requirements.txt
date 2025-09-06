@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+pydantic
+pandas
+scikit-learn
+joblib
+motor
+python-dotenv
+pytest
+requests
+
+sse-starlette
